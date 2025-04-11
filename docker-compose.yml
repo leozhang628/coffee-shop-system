@@ -1,0 +1,324 @@
+﻿version: '3.8'
+
+services:
+  app1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coffee_shop_api_1
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
+    ports:
+      - "8001:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - APP_PORT=8000
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=Jerry
+      - DB_PASSWORD=123456
+      - DB_NAME=COM6102
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+      - SECRET_KEY=your-secret-key-here
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=43200
+      - DEBUG=false
+      - ENVIRONMENT=production
+      - ENABLE_METRICS=true
+    networks:
+      - coffee_shop_network
+    expose: 
+      - "8000"
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  app2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coffee_shop_api_2
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
+    ports:
+      - "8002:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - APP_PORT=8000
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=Jerry
+      - DB_PASSWORD=123456
+      - DB_NAME=COM6102
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+      - SECRET_KEY=your-secret-key-here
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=43200
+      - DEBUG=false
+      - ENVIRONMENT=production
+      - ENABLE_METRICS=true
+    networks:
+      - coffee_shop_network
+    expose:
+      - "8000"
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+  
+  app3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coffee_shop_api_3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
+    ports:
+      - "8003:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - APP_PORT=8000
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=Jerry
+      - DB_PASSWORD=123456
+      - DB_NAME=COM6102
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+      - SECRET_KEY=your-secret-key-here
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=43200
+      - DEBUG=false
+      - ENVIRONMENT=production
+      - ENABLE_METRICS=true
+    networks:
+      - coffee_shop_network
+    expose:
+      - "8000"
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+      
+  mysql:
+    image: mysql:8.0
+    container_name: coffee_shop_mysql
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=COM6102
+      - MYSQL_USER=Jerry
+      - MYSQL_PASSWORD=123456
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - coffee_shop_network
+    command: 
+      - --default-authentication-plugin=mysql_native_password
+      - --binlog-format=ROW
+      - --log-bin=mysql-bin
+      - --binlog-row-image=FULL
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-p123456", "--silent"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
+
+  redis:
+    image: redis:6.2-alpine
+    container_name: coffee_shop_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - coffee_shop_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  nginx:
+    image: nginx:alpine
+    container_name: coffee_shop_nginx
+    ports:
+      - "8000:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app1
+      - app2
+      - app3
+    networks:
+      - coffee_shop_network
+
+  seatunnel:
+    image: apache/seatunnel:latest
+    container_name: coffee_shop_seatunnel
+    volumes:
+      - ./seatunnel/config:/seatunnel/config
+    networks:
+      - coffee_shop_network
+    depends_on:
+      - mysql
+      - redis
+    restart: unless-stopped
+    command: 
+      - "./bin/seatunnel.sh"
+      - "-m"
+      - "local"
+      - "-c"
+      - "/seatunnel/config/mysql-to-redis.conf"
+
+  # 添加Prometheus服务
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: coffee_shop_prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    restart: always
+    networks:
+      - coffee_shop_network
+    
+  # 添加Node Exporter用于监控主机指标
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: coffee_shop_node_exporter
+    ports:
+      - "9100:9100"
+    restart: always
+    networks:
+      - coffee_shop_network
+    
+  # 添加Grafana用于可视化
+  grafana:
+    image: grafana/grafana:latest
+    container_name: coffee_shop_grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    restart: always
+    depends_on:
+      - prometheus
+    networks:
+      - coffee_shop_network
+
+networks:
+  coffee_shop_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
